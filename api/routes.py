@@ -9,6 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import date, datetime, timezone
+from contextlib import asynccontextmanager
 from enum import Enum
 import asyncpg
 import uuid
@@ -18,10 +19,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Démarre le scheduler APScheduler au boot, l'arrête à l'extinction."""
+    from scheduler import setup_scheduler, scheduler
+    setup_scheduler()
+    scheduler.start()
+    logger.info("[BOOT] APScheduler started — 4 jobs active")
+    yield
+    scheduler.shutdown(wait=False)
+    logger.info("[SHUTDOWN] APScheduler stopped")
+
+
 app = FastAPI(
     title="ComplianceOS API",
-    version="2.1.0",
-    description="RegTech KYB/AML/CASS15 platform for UK fintechs",
+    version="2.2.0",
+    description="RegTech KYB/AML/CASS15 + Transaction Monitoring platform for UK fintechs",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
