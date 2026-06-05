@@ -129,6 +129,18 @@ class PaginationParams(BaseModel):
     page: int = 1
     per_page: int = 25
 
+class TransactionRequest(BaseModel):
+    business_id: Optional[str] = None
+    amount: float = Field(..., gt=0)
+    currency: str = Field(default="GBP", min_length=3, max_length=3)
+    beneficiary_name: Optional[str] = None
+    beneficiary_country: Optional[str] = Field(None, min_length=2, max_length=2)
+    beneficiary_iban: Optional[str] = None
+    reference: Optional[str] = None
+    tx_type: Optional[str] = None
+    channel: Optional[str] = None
+    raw_data: dict = {}
+
 
 # ─────────────────────────────────────────────
 # UTILS
@@ -751,4 +763,187 @@ async def get_stats(
         "businesses": dict(biz) if biz else {},
         "alerts": dict(alerts) if alerts else {},
         "cass15_today": dict(today_recon) if today_recon else None,
+    }
+
+
+# ═══════════════════════════════════════════════════════════
+# TRANSACTIONS — Surveillance continue
+# ═══════════════════════════════════════════════════════════
+
+@app.post("/api/v1/transactions", status_code=201)
+async def create_transaction(
+    body: TransactionRequest,
+    tenant_id: str = Depends(get_tenant),
+    db: asyncpg.Connection = Depends(get_db),
+):
+    """
+    Soumet une transaction et l'évalue immédiatement via le moteur de règles AML.
+    Retourne risk_score, flagged, flagged_rules et alert_id si alerte créée.
+    """
+    from transaction_monitor import transaction_monitor
+
+    tx_id = str(uuid.uuid4())
+
+    # Persister la transaction (risk_score sera mis à jour après évaluation)
+    await db.execute(
+        """INSERT INTO transactions
+           (id, tenant_id, business_id, amount, currency, beneficiary_name,
+            beneficiary_country, beneficiary_iban, reference, tx_type, channel,
+            risk_score, flagged, flagged_rules, raw_data, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0,FALSE,'{}','{}',$12)""",
+        tx_id,
+        tenant_id,
+        body.business_id,
+        body.amount,
+        body.currency.upper(),
+        body.beneficiary_name,
+        body.beneficiary_country.upper() if body.beneficiary_country else None,
+        body.beneficiary_iban,
+        body.reference,
+        body.tx_type,
+        body.channel,
+        datetime.now(timezone.utc),
+    )
+
+    # Évaluer via le moteur de règles
+    tx_dict = {
+        "id": tx_id,
+        "business_id": body.business_id,
+        "amount": body.amount,
+        "currency": body.currency.upper(),
+        "beneficiary_name": body.beneficiary_name,
+        "beneficiary_country": body.beneficiary_country.upper() if body.beneficiary_country else None,
+        "tx_type": body.tx_type,
+    }
+
+    result = await transaction_monitor.evaluate(tx_dict, db, tenant_id)
+
+    # Mettre à jour la transaction avec le résultat de l'évaluation
+    await db.execute(
+        """UPDATE transactions
+           SET risk_score=$1, flagged=$2, flagged_rules=$3
+           WHERE id=$4""",
+        result["risk_score"],
+        result["flagged"],
+        result["flagged_rules"],
+        tx_id,
+    )
+
+    return {
+        "transaction_id": tx_id,
+        "risk_score":     result["risk_score"],
+        "flagged":        result["flagged"],
+        "flagged_rules":  result["flagged_rules"],
+        "alert_id":       result["alert_id"],
+    }
+
+
+@app.get("/api/v1/transactions")
+async def list_transactions(
+    flagged: Optional[bool] = Query(None),
+    business_id: Optional[str] = Query(None),
+    min_score: Optional[int] = Query(None, ge=0, le=100),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    tenant_id: str = Depends(get_tenant),
+    db: asyncpg.Connection = Depends(get_db),
+):
+    """Liste les transactions avec filtres."""
+    conditions = ["tenant_id = $1"]
+    params = [tenant_id]
+    i = 2
+
+    if flagged is not None:
+        conditions.append(f"flagged = ${i}"); params.append(flagged); i += 1
+    if business_id:
+        conditions.append(f"business_id = ${i}"); params.append(business_id); i += 1
+    if min_score is not None:
+        conditions.append(f"risk_score >= ${i}"); params.append(min_score); i += 1
+
+    where = " AND ".join(conditions)
+    total = await db.fetchval(f"SELECT COUNT(*) FROM transactions WHERE {where}", *params)
+    rows = await db.fetch(
+        f"""SELECT id, business_id, amount, currency, beneficiary_name,
+                   beneficiary_country, tx_type, channel, risk_score,
+                   flagged, flagged_rules, created_at
+            FROM transactions WHERE {where}
+            ORDER BY created_at DESC
+            LIMIT {per_page} OFFSET {(page-1)*per_page}""",
+        *params,
+    )
+
+    return {
+        "data": [dict(r) for r in rows],
+        "pagination": {
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": -(-total // per_page),
+        },
+    }
+
+
+@app.get("/api/v1/transactions/{tx_id}")
+async def get_transaction(
+    tx_id: str,
+    tenant_id: str = Depends(get_tenant),
+    db: asyncpg.Connection = Depends(get_db),
+):
+    """Détail d'une transaction."""
+    row = await db.fetchrow(
+        "SELECT * FROM transactions WHERE id=$1 AND tenant_id=$2",
+        tx_id, tenant_id,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return dict(row)
+
+
+# ═══════════════════════════════════════════════════════════
+# MONITORING STATS
+# ═══════════════════════════════════════════════════════════
+
+@app.get("/api/v1/monitoring/stats")
+async def get_monitoring_stats(
+    tenant_id: str = Depends(get_tenant),
+    db: asyncpg.Connection = Depends(get_db),
+):
+    """KPIs de surveillance : transactions 24h, flaggées, risk moyen, SAR en attente."""
+    stats = await db.fetchrow(
+        """SELECT
+             COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours')  AS tx_last_24h,
+             COUNT(*) FILTER (WHERE flagged = TRUE)                              AS flagged_count,
+             ROUND(AVG(risk_score), 1)                                           AS avg_risk_score,
+             COUNT(*) FILTER (WHERE risk_score >= 60)                            AS high_risk_count,
+             COUNT(*) FILTER (WHERE flagged = TRUE AND created_at >= NOW() - INTERVAL '7 days') AS flagged_7d
+           FROM transactions
+           WHERE tenant_id = $1""",
+        tenant_id,
+    )
+
+    sar_pending = await db.fetchval(
+        "SELECT COUNT(*) FROM alerts WHERE tenant_id=$1 AND sar_required=TRUE AND status!='resolved'",
+        tenant_id,
+    )
+
+    top_rules = await db.fetch(
+        """SELECT rule_flag, COUNT(*) AS count
+           FROM (
+               SELECT UNNEST(flagged_rules) AS rule_flag
+               FROM transactions
+               WHERE tenant_id=$1 AND flagged=TRUE
+                 AND created_at >= NOW() - INTERVAL '7 days'
+           ) sub
+           GROUP BY rule_flag ORDER BY count DESC LIMIT 6""",
+        tenant_id,
+    )
+
+    return {
+        "tx_last_24h":    int(stats["tx_last_24h"] or 0),
+        "flagged_count":  int(stats["flagged_count"] or 0),
+        "flagged_7d":     int(stats["flagged_7d"] or 0),
+        "avg_risk_score": float(stats["avg_risk_score"] or 0),
+        "high_risk_count": int(stats["high_risk_count"] or 0),
+        "sar_pending_count": int(sar_pending or 0),
+        "top_rules_7d":   [{"rule": r["rule_flag"], "count": r["count"]} for r in top_rules],
     }
