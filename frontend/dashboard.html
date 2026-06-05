@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComplianceOS — RegTech Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #161b24;
+  --border: #1e2535;
+  --border2: #252d3d;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #475569;
+  --blue: #3b82f6;
+  --blue-dim: #1e3a5f;
+  --green: #22c55e;
+  --green-dim: #14532d;
+  --yellow: #f59e0b;
+  --yellow-dim: #451a03;
+  --red: #ef4444;
+  --red-dim: #450a0a;
+  --orange: #f97316;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+.logo-mark span { color: var(--blue); }
+.logo-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.nav { padding: 12px 10px; flex: 1; }
+
+.nav-section {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 10px 10px 5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: #1e3a5f; color: #93c5fd; }
+.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.nav-item .badge.warn { background: var(--yellow); color: #000; }
+
+.sidebar-bottom {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.user-card:hover { background: var(--surface2); }
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.user-name { font-size: 12px; font-weight: 500; }
+.user-role { font-size: 10px; color: var(--text3); }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.page-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+.btn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover { background: #2563eb; }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: #374151; }
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.kpi-card.alert-card { border-color: #7c2020; }
+.kpi-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.kpi-label { font-size: 11px; color: var(--text2); font-weight: 500; }
+.kpi-icon { font-size: 14px; }
+.kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
+.kpi-trend {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 6px;
+  display: inline-block;
+}
+.trend-up { background: var(--green-dim); color: var(--green); }
+.trend-down { background: var(--red-dim); color: var(--red); }
+.trend-warn { background: var(--yellow-dim); color: var(--yellow); }
+
+/* ── GRID 2-COL ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+/* ── PANEL ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title { font-size: 13px; font-weight: 600; }
+.panel-action { font-size: 11px; color: var(--blue); cursor: pointer; }
+.panel-action:hover { text-decoration: underline; }
+
+/* ── TABLE ── */
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 9px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.table td {
+  padding: 11px 14px;
+  font-size: 12px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: #0d1018; }
+
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-approved { background: #14532d; color: #4ade80; }
+.badge-review { background: #451a03; color: #fb923c; }
+.badge-pending { background: #1e2535; color: var(--text2); }
+.badge-rejected { background: var(--red-dim); color: #f87171; }
+.badge-low { background: #14532d; color: #4ade80; }
+.badge-medium { background: #3b2600; color: #fbbf24; }
+.badge-high { background: #450a0a; color: #f87171; }
+.badge-critical { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+.badge-open { background: #450a0a; color: #fca5a5; }
+.badge-investigating { background: #3b2600; color: #fcd34d; }
+.badge-resolved { background: #14532d; color: #86efac; }
+.badge-clear { background: #14532d; color: #4ade80; }
+.badge-hit { background: var(--red-dim); color: #f87171; }
+
+/* ── RISK METER ── */
+.risk-bar { height: 5px; background: var(--border); border-radius: 3px; margin-top: 4px; }
+.risk-fill { height: 100%; border-radius: 3px; }
+
+/* ── ALERT ITEMS ── */
+.alert-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.alert-content { flex: 1; }
+.alert-title { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+.alert-meta { font-size: 11px; color: var(--text3); }
+
+/* ── CASS15 ── */
+.recon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.recon-cell {
+  padding: 16px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.recon-cell:nth-child(3n) { border-right: none; }
+.recon-cell:nth-child(n+4) { border-bottom: none; }
+.recon-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.recon-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.recon-value.ok { color: var(--green); }
+.recon-value.warn { color: var(--yellow); }
+.recon-value.bad { color: var(--red); }
+
+/* ── CHART (CSS only) ── */
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 80px;
+  padding: 14px 16px 10px;
+}
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar { width: 100%; border-radius: 3px 3px 0 0; transition: opacity 0.2s; cursor: pointer; }
+.bar:hover { opacity: 0.8; }
+.bar-label { font-size: 9px; color: var(--text3); }
+
+/* ── STATUS ROW ── */
+.status-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.status-row:last-child { border-bottom: none; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── PROGRESS ── */
+.progress { height: 6px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; }
+
+/* ── HEADER PILL ── */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.pill-blue { background: var(--blue-dim); color: #93c5fd; }
+.pill-green { background: var(--green-dim); color: #86efac; }
+.pill-red { background: var(--red-dim); color: #fca5a5; }
+
+/* ── SEARCH BAR ── */
+.search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 7px 12px;
+  width: 220px;
+}
+.search-bar input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-size: 12px; width: 100%;
+}
+.search-bar input::placeholder { color: var(--text3); }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 16px; }
+.tab {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── FCA STATUS ── */
+.fca-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.fca-item:last-child { border-bottom: none; }
+.fca-info { flex: 1; }
+.fca-name { font-size: 12px; font-weight: 500; }
+.fca-period { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.fca-status { font-size: 11px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Compliance<span>OS</span></div>
+    <div class="logo-sub">FCA RegTech Platform</div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-section">Platform</div>
+    <div class="nav-item active" onclick="showPage('overview')">
+      <span class="icon">◉</span> Overview
+    </div>
+    <div class="nav-item" onclick="showPage('kyb')">
+      <span class="icon">🏦</span> KYB
+    </div>
+    <div class="nav-item" onclick="showPage('aml')">
+      <span class="icon">🔍</span> AML Screening
+      <span class="badge">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('alerts')">
+      <span class="icon">⚠️</span> Alerts
+      <span class="badge">7</span>
+    </div>
+
+    <div class="nav-section">Compliance</div>
+    <div class="nav-item" onclick="showPage('cass15')">
+      <span class="icon">🔐</span> CASS 15
+      <span class="badge warn">!</span>
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <span class="icon">📊</span> FCA Reports
+    </div>
+    <div class="nav-item" onclick="showPage('audit')">
+      <span class="icon">📋</span> Audit Log
+    </div>
+
+    <div class="nav-section">Settings</div>
+    <div class="nav-item">
+      <span class="icon">👥</span> Team
+    </div>
+    <div class="nav-item">
+      <span class="icon">⚙️</span> Settings
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="avatar">AJ</div>
+      <div>
+        <div class="user-name">Alex Johnson</div>
+        <div class="user-role">MLRO · Dev Fintech Ltd</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ═══════════════ OVERVIEW PAGE ═══════════════ -->
+  <div id="page-overview">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Overview</div>
+        <div class="page-sub">Monday, 2 June 2026 · FCA firm ref: 800000</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="pill pill-green">● Live</div>
+        <button class="btn btn-primary" onclick="showPage('kyb')">+ Run KYB</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-label">Businesses Verified</div>
+          <span class="kpi-icon">🏦</span>
+        </div>
+        <div class="kpi-value">142</div>
+        <div class="kpi-sub">of 168 total</div>
+        <div class="kpi-trend trend-up">▲ +8 this month</div>
+      </div>
+      <div class="kpi-card alert-card">
+        <div class="kpi-header">
+          <div class="kpi-label">Open Alerts</div>
+          <span class="kpi-icon">⚠️</span>
+        </div>
+        <div class="kpi-value" style="color: var(--red)">7</div>
+        <div class="kpi-sub">3 critical · 2 SAR required</div>
+        <div class="kpi-trend trend-down">▼ 2 new today</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-label">Reviews Due (30d)</div>
+          <span class="kpi-icon">📅</span>
+        </div>
+        <div class="kpi-value" style="color: var(--yellow)">12</div>
+        <div class="kpi-sub">Next: Revolut Ltd (Jun 8)</div>
+        <div class="kpi-trend trend-warn">⚑ Action required</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-label">CASS 15 Today</div>
+          <span class="kpi-icon">🔐</span>
+        </div>
+        <div class="kpi-value" style="color: var(--green)">✓</div>
+        <div class="kpi-sub">£2.4M safeguarded · No shortfall</div>
+        <div class="kpi-trend trend-up">Reconciled 09:14</div>
+      </div>
+    </div>
+
+    <div class="grid-3-1">
+      <!-- Recent KYB -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Recent KYB Activity</div>
+          <span class="panel-action" onclick="showPage('kyb')">View all →</span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Number</th>
+              <th>Risk</th>
+              <th>Status</th>
+              <th>Verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Monzo Bank Ltd</strong></td>
+              <td><span class="mono">09446231</span></td>
+              <td>
+                <span class="badge badge-low">Low</span>
+                <div class="risk-bar" style="width:60px"><div class="risk-fill" style="background:var(--green);width:18%"></div></div>
+              </td>
+              <td><span class="badge badge-approved">Approved</span></td>
+              <td style="color:var(--text3);font-size:11px">2h ago</td>
+            </tr>
+            <tr>
+              <td><strong>Wise Payments Ltd</strong></td>
+              <td><span class="mono">05843789</span></td>
+              <td>
+                <span class="badge badge-medium">Medium</span>
+                <div class="risk-bar" style="width:60px"><div class="risk-fill" style="background:var(--yellow);width:42%"></div></div>
+              </td>
+              <td><span class="badge badge-approved">Approved</span></td>
+              <td style="color:var(--text3);font-size:11px">5h ago</td>
+            </tr>
+            <tr>
+              <td><strong>Revolut Ltd</strong></td>
+              <td><span class="mono">08804411</span></td>
+              <td>
+                <span class="badge badge-medium">Medium</span>
+                <div class="risk-bar" style="width:60px"><div class="risk-fill" style="background:var(--yellow);width:55%"></div></div>
+              </td>
+              <td><span class="badge badge-review">Review</span></td>
+              <td style="color:var(--text3);font-size:11px">Yesterday</td>
+            </tr>
+            <tr>
+              <td><strong>Oaknorth Bank</strong></td>
+              <td><span class="mono">10036270</span></td>
+              <td>
+                <span class="badge badge-high">High</span>
+                <div class="risk-bar" style="width:60px"><div class="risk-fill" style="background:var(--red);width:72%"></div></div>
+              </td>
+              <td><span class="badge badge-review">Review</span></td>
+              <td style="color:var(--text3);font-size:11px">Jun 1</td>
+            </tr>
+            <tr>
+              <td><strong>Starling Bank</strong></td>
+              <td><span class="mono">09092148</span></td>
+              <td>
+                <span class="badge badge-low">Low</span>
+                <div class="risk-bar" style="width:60px"><div class="risk-fill" style="background:var(--green);width:12%"></div></div>
+              </td>
+              <td><span class="badge badge-approved">Approved</span></td>
+              <td style="color:var(--text3);font-size:11px">Jun 1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Alert summary -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Active Alerts</div>
+          <span class="panel-action" onclick="showPage('alerts')">View all →</span>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot" style="background:var(--red)"></div>
+          <div class="alert-content">
+            <div class="alert-title">🔴 Sanctions hit — Oaknorth</div>
+            <div class="alert-meta">OFAC SDN match · SAR required · Critical</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot" style="background:var(--red)"></div>
+          <div class="alert-content">
+            <div class="alert-title">🔴 PEP identified — Revolut</div>
+            <div class="alert-meta">UBO J. Storonsky · High · EDD needed</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot" style="background:var(--orange)"></div>
+          <div class="alert-content">
+            <div class="alert-title">🟠 KYB expired — 3 companies</div>
+            <div class="alert-meta">12-month review overdue</div>
+          </div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-dot" style="background:var(--yellow)"></div>
+          <div class="alert-content">
+            <div class="alert-title">🟡 Corporate PSC detected</div>
+            <div class="alert-meta">Oaknorth → Intermediate Holdco BV</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASS 15 snapshot + FCA reports -->
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">CASS 15 — Last 7 days</div>
+          <span class="panel-action" onclick="showPage('cass15')">View all →</span>
+        </div>
+        <div class="recon-grid">
+          <div class="recon-cell">
+            <div class="recon-label">Avg Daily Funds</div>
+            <div class="recon-value ok">£2.38M</div>
+          </div>
+          <div class="recon-cell">
+            <div class="recon-label">Coverage Rate</div>
+            <div class="recon-value ok">99.8%</div>
+          </div>
+          <div class="recon-cell">
+            <div class="recon-label">Shortfall Days</div>
+            <div class="recon-value warn">1</div>
+          </div>
+          <div class="recon-cell">
+            <div class="recon-label">Days Reconciled</div>
+            <div class="recon-value ok">6/7</div>
+          </div>
+          <div class="recon-cell">
+            <div class="recon-label">Max Shortfall</div>
+            <div class="recon-value warn">£4,200</div>
+          </div>
+          <div class="recon-cell">
+            <div class="recon-label">SUP 16.14A</div>
+            <div class="recon-value ok" style="font-size:14px;padding-top:3px">Due Jun 15</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">FCA Reports</div>
+          <span class="panel-action" onclick="showPage('reports')">View all →</span>
+        </div>
+        <div class="fca-item">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px"></div>
+          <div class="fca-info">
+            <div class="fca-name">CASS 15 Daily Recon</div>
+            <div class="fca-period">Today · 2 June 2026</div>
+          </div>
+          <div class="fca-status" style="color:var(--green)">Submitted</div>
+        </div>
+        <div class="fca-item">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:4px"></div>
+          <div class="fca-info">
+            <div class="fca-name">SUP 16.14A Monthly</div>
+            <div class="fca-period">May 2026 · Due Jun 15</div>
+          </div>
+          <div class="fca-status" style="color:var(--yellow)">Draft</div>
+        </div>
+        <div class="fca-item">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px"></div>
+          <div class="fca-info">
+            <div class="fca-name">SUP 16.14A Monthly</div>
+            <div class="fca-period">April 2026</div>
+          </div>
+          <div class="fca-status" style="color:var(--green)">Accepted</div>
+        </div>
+        <div class="fca-item">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;margin-top:4px"></div>
+          <div class="fca-info">
+            <div class="fca-name">SUP 3A Annual Audit</div>
+            <div class="fca-period">FY 2025–26 · Due Dec 31</div>
+          </div>
+          <div class="fca-status" style="color:var(--text3)">Not started</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ KYB PAGE ═══════════════ -->
+  <div id="page-kyb" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">KYB — Know Your Business</div>
+        <div class="page-sub">168 companies · 12 reviews overdue</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="search-bar">
+          <span style="color:var(--text3)">🔍</span>
+          <input type="text" placeholder="Search company or number…">
+        </div>
+        <button class="btn btn-ghost">Filter ▾</button>
+        <button class="btn btn-primary">+ Run KYB</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">All (168)</div>
+      <div class="tab">Approved (142)</div>
+      <div class="tab">Review Required (18)</div>
+      <div class="tab">Pending (5)</div>
+      <div class="tab">Rejected (3)</div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Number</th>
+            <th>Jurisdiction</th>
+            <th>Risk Score</th>
+            <th>KYB Status</th>
+            <th>UBOs</th>
+            <th>Last Verified</th>
+            <th>Next Review</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Monzo Bank Ltd</strong><br><span style="font-size:10px;color:var(--text3)">Retail Banking · SIC 6419</span></td>
+            <td><span class="mono">09446231</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green)">18</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--green);width:18%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Approved</span></td>
+            <td><span class="mono">3</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-06-02</td>
+            <td style="color:var(--green);font-size:11px">2027-06-02</td>
+          </tr>
+          <tr>
+            <td><strong>Wise Payments Ltd</strong><br><span style="font-size:10px;color:var(--text3)">Payment Services · SIC 6611</span></td>
+            <td><span class="mono">05843789</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow)">42</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--yellow);width:42%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Approved</span></td>
+            <td><span class="mono">5</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-06-02</td>
+            <td style="color:var(--green);font-size:11px">2027-06-02</td>
+          </tr>
+          <tr>
+            <td><strong>Revolut Ltd</strong><br><span style="font-size:10px;color:var(--text3)">E-Money Institution · SIC 6411</span></td>
+            <td><span class="mono">08804411</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow)">55</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--yellow);width:55%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-review">Review Required</span></td>
+            <td><span class="mono">4</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-06-01</td>
+            <td style="color:var(--yellow);font-size:11px">2026-06-08</td>
+          </tr>
+          <tr>
+            <td><strong>Oaknorth Bank plc</strong><br><span style="font-size:10px;color:var(--text3)">Commercial Banking · SIC 6419</span></td>
+            <td><span class="mono">10036270</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red)">72</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--red);width:72%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-review">Review Required</span></td>
+            <td><span class="mono">2</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-06-01</td>
+            <td style="color:var(--red);font-size:11px">2026-04-01 ⚑</td>
+          </tr>
+          <tr>
+            <td><strong>Starling Bank Ltd</strong><br><span style="font-size:10px;color:var(--text3)">Retail Banking · SIC 6419</span></td>
+            <td><span class="mono">09092148</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green)">12</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--green);width:12%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Approved</span></td>
+            <td><span class="mono">2</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-06-01</td>
+            <td style="color:var(--green);font-size:11px">2027-06-01</td>
+          </tr>
+          <tr>
+            <td><strong>Modulr Finance Ltd</strong><br><span style="font-size:10px;color:var(--text3)">Payment Services · SIC 6611</span></td>
+            <td><span class="mono">09650838</span></td>
+            <td><span style="font-size:11px">🇬🇧 GB</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow)">38</span>
+                <div class="risk-bar" style="width:50px"><div class="risk-fill" style="background:var(--yellow);width:38%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Approved</span></td>
+            <td><span class="mono">3</span></td>
+            <td style="color:var(--text3);font-size:11px">2026-05-28</td>
+            <td style="color:var(--green);font-size:11px">2027-05-28</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ ALERTS PAGE ═══════════════ -->
+  <div id="page-alerts" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">AML Alerts</div>
+        <div class="page-sub">7 open · 2 SAR required · 3 critical</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">Filter ▾</button>
+        <button class="btn btn-primary">Export</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Company</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>SAR</th>
+            <th>Description</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">Sanctions Hit</span></td>
+            <td><strong>Oaknorth Bank</strong></td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><span class="badge badge-open">Open</span></td>
+            <td><span style="color:var(--red);font-size:11px;font-weight:600">⚑ Required</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">OFAC SDN match — Director T. Konstantinidis (score 0.94)</td>
+            <td style="color:var(--text3);font-size:11px">Today 08:42</td>
+          </tr>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">PEP Identified</span></td>
+            <td><strong>Revolut Ltd</strong></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-investigating">Investigating</span></td>
+            <td><span style="color:var(--red);font-size:11px;font-weight:600">⚑ Required</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">UBO N. Storonsky listed as PEP — Former Russian state entity ties</td>
+            <td style="color:var(--text3);font-size:11px">Yesterday</td>
+          </tr>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">KYB Expired</span></td>
+            <td><strong>3 companies</strong></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-open">Open</span></td>
+            <td><span style="color:var(--text3);font-size:11px">—</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">12-month review overdue: Oaknorth, ClearBank, Banking Circle</td>
+            <td style="color:var(--text3);font-size:11px">Jun 1</td>
+          </tr>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">Corporate PSC</span></td>
+            <td><strong>Oaknorth Bank</strong></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-open">Open</span></td>
+            <td><span style="color:var(--text3);font-size:11px">—</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">corporate_psc: Intermediate Holdco BV — nested ownership chain depth 2</td>
+            <td style="color:var(--text3);font-size:11px">Jun 1</td>
+          </tr>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">Adverse Media</span></td>
+            <td><strong>Wise Payments</strong></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-investigating">Investigating</span></td>
+            <td><span style="color:var(--text3);font-size:11px">—</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">3 adverse media hits — FX compliance investigation (2025)</td>
+            <td style="color:var(--text3);font-size:11px">May 30</td>
+          </tr>
+          <tr>
+            <td><span style="font-size:12px;font-weight:600">Sanctions Hit</span></td>
+            <td><strong>TechPay Ltd</strong></td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><span class="badge badge-resolved">Resolved</span></td>
+            <td><span style="color:var(--green);font-size:11px;font-weight:600">Filed SAR-2026-A3F2</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text2)">UK HMT match confirmed — SAR filed, account monitoring active</td>
+            <td style="color:var(--text3);font-size:11px">May 28</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ CASS15 PAGE ═══════════════ -->
+  <div id="page-cass15" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">CASS 15 — Safeguarding</div>
+        <div class="page-sub">Daily reconciliation · PS25/12 · FCA effective May 2026</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">SUP 16.14A ↗</button>
+        <button class="btn btn-primary">+ Submit Reconciliation</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:20px">
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Avg Daily Funds</div><span>💰</span></div>
+        <div class="kpi-value" style="font-size:22px;color:var(--cyan)">£2.38M</div>
+        <div class="kpi-sub">Total relevant funds</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Coverage Rate</div><span>🛡️</span></div>
+        <div class="kpi-value" style="font-size:22px;color:var(--green)">99.8%</div>
+        <div class="kpi-sub">Safeguarded / Total</div>
+        <div class="progress" style="margin-top:8px"><div class="progress-fill" style="background:var(--green);width:99.8%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Reconciliation Rate</div><span>✅</span></div>
+        <div class="kpi-value" style="font-size:22px;color:var(--green)">85.7%</div>
+        <div class="kpi-sub">6 of 7 days this week</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Shortfall Days</div><span>⚠️</span></div>
+        <div class="kpi-value" style="font-size:22px;color:var(--yellow)">1</div>
+        <div class="kpi-sub">£4,200 on Jun 1 · Explained</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Daily Reconciliation Records</div>
+        <span style="font-size:11px;color:var(--text3)">Last 7 days</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Total Relevant Funds</th>
+            <th>Safeguarded</th>
+            <th>Shortfall</th>
+            <th>Coverage</th>
+            <th>Status</th>
+            <th>Accounts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600">Jun 2, 2026 <span style="font-size:10px;color:var(--blue)">Today</span></td>
+            <td><span class="mono">£2,401,540.00</span></td>
+            <td><span class="mono">£2,401,540.00</span></td>
+            <td><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:12px">£0.00</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--green)">100%</span>
+                <div class="progress" style="width:60px"><div class="progress-fill" style="background:var(--green);width:100%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Reconciled</span></td>
+            <td><span class="mono">2</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Jun 1, 2026</td>
+            <td><span class="mono">£2,358,200.00</span></td>
+            <td><span class="mono">£2,354,000.00</span></td>
+            <td><span style="color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:12px">£4,200.00 ⚑</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--yellow)">99.8%</span>
+                <div class="progress" style="width:60px"><div class="progress-fill" style="background:var(--yellow);width:99.8%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-review">Shortfall</span></td>
+            <td><span class="mono">2</span></td>
+          </tr>
+          <tr>
+            <td>May 31, 2026</td>
+            <td><span class="mono">£2,290,100.00</span></td>
+            <td><span class="mono">£2,290,100.00</span></td>
+            <td><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:12px">£0.00</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--green)">100%</span>
+                <div class="progress" style="width:60px"><div class="progress-fill" style="background:var(--green);width:100%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Reconciled</span></td>
+            <td><span class="mono">2</span></td>
+          </tr>
+          <tr>
+            <td>May 30, 2026</td>
+            <td><span class="mono">£2,415,800.00</span></td>
+            <td><span class="mono">£2,415,800.00</span></td>
+            <td><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:12px">£0.00</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:var(--green)">100%</span>
+                <div class="progress" style="width:60px"><div class="progress-fill" style="background:var(--green);width:100%"></div></div>
+              </div>
+            </td>
+            <td><span class="badge badge-approved">Reconciled</span></td>
+            <td><span class="mono">3</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ REPORTS PAGE ═══════════════ -->
+  <div id="page-reports" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">FCA Reports</div>
+        <div class="page-sub">SUP 16.14A · CASS 10 · SUP 3A · CASS 15</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary">+ Create Report</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Report Type</th>
+            <th>Period</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>MLRO Sign-off</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CASS 15 Daily Recon</strong><br><span style="font-size:10px;color:var(--text3)">cass15_daily_recon</span></td>
+            <td><span class="mono" style="font-size:11px">2026-06-02</span></td>
+            <td><span class="badge badge-approved">Submitted</span></td>
+            <td style="font-size:11px;color:var(--text3)">Today 09:14</td>
+            <td><span style="color:var(--green);font-size:12px">✓ A. Johnson</span></td>
+            <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:10px">View PDF</button></td>
+          </tr>
+          <tr>
+            <td><strong>SUP 16.14A Monthly</strong><br><span style="font-size:10px;color:var(--text3)">sup16_14a_monthly</span></td>
+            <td><span class="mono" style="font-size:11px">May 2026</span></td>
+            <td><span class="badge badge-medium" style="background:#3b2600;color:#fbbf24">Draft</span></td>
+            <td style="font-size:11px;color:var(--text3)">—</td>
+            <td><span style="color:var(--text3);font-size:12px">Pending</span></td>
+            <td><button class="btn btn-primary" style="padding:4px 10px;font-size:10px">Submit →</button></td>
+          </tr>
+          <tr>
+            <td><strong>SUP 16.14A Monthly</strong><br><span style="font-size:10px;color:var(--text3)">sup16_14a_monthly</span></td>
+            <td><span class="mono" style="font-size:11px">Apr 2026</span></td>
+            <td><span class="badge badge-approved">Accepted</span></td>
+            <td style="font-size:11px;color:var(--text3)">May 12, 2026</td>
+            <td><span style="color:var(--green);font-size:12px">✓ A. Johnson</span></td>
+            <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:10px">View PDF</button></td>
+          </tr>
+          <tr>
+            <td><strong>CASS 10 Resolution Pack</strong><br><span style="font-size:10px;color:var(--text3)">cass10_resolution_pack</span></td>
+            <td><span class="mono" style="font-size:11px">FY 2025–26</span></td>
+            <td><span class="badge badge-pending">Not Started</span></td>
+            <td style="font-size:11px;color:var(--text3)">Due Dec 31, 2026</td>
+            <td><span style="color:var(--text3);font-size:12px">—</span></td>
+            <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:10px">Create</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ AUDIT PAGE ═══════════════ -->
+  <div id="page-audit" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Audit Log</div>
+        <div class="page-sub">Immutable trail · FCA-compliant · All actions</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Entity ID</th>
+            <th>User</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">09:14:22</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan)">cass15_recon_submitted</span></td>
+            <td><span style="font-size:11px">safeguarding</span></td>
+            <td><span class="mono">a3f2…8b1c</span></td>
+            <td style="font-size:11px">A. Johnson</td>
+            <td style="font-size:11px;color:var(--text3)">funds: £2,401,540 · shortfall: £0</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">08:42:05</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red)">alert_open</span></td>
+            <td><span style="font-size:11px">alert</span></td>
+            <td><span class="mono">7d1e…3a90</span></td>
+            <td style="font-size:11px">System</td>
+            <td style="font-size:11px;color:var(--text3)">type: sanctions_hit · severity: critical</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">08:41:58</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)">kyb_completed_by_api</span></td>
+            <td><span style="font-size:11px">business</span></td>
+            <td><span class="mono">4c9b…1d22</span></td>
+            <td style="font-size:11px">System</td>
+            <td style="font-size:11px;color:var(--text3)">risk: 72 · level: high · hits: 1</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">Yesterday 14:33</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--yellow)">alert_investigating</span></td>
+            <td><span style="font-size:11px">alert</span></td>
+            <td><span class="mono">2f8a…5c44</span></td>
+            <td style="font-size:11px">A. Johnson</td>
+            <td style="font-size:11px;color:var(--text3)">Revolut PEP alert — under review</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">May 28 11:05</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--purple)">sar_filed</span></td>
+            <td><span style="font-size:11px">alert</span></td>
+            <td><span class="mono">9e3d…0b77</span></td>
+            <td style="font-size:11px">A. Johnson</td>
+            <td style="font-size:11px;color:var(--text3)">SAR-2026-A3F2 · TechPay Ltd</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:var(--text3)">May 28 09:00</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">user_registered</span></td>
+            <td><span style="font-size:11px">user</span></td>
+            <td><span class="mono">1a2b…3c4d</span></td>
+            <td style="font-size:11px">—</td>
+            <td style="font-size:11px;color:var(--text3)">email: alex@devfintech.co.uk · company: Dev Fintech Ltd</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ AML PAGE ═══════════════ -->
+  <div id="page-aml" style="display:none">
+    <div class="topbar">
+      <div>
+        <div class="page-title">AML Screening</div>
+        <div class="page-sub">NameScan · Dilisense · Sanctions + PEP + Adverse Media</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary">+ New Screening</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:20px">
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Screenings (30d)</div><span>🔍</span></div>
+        <div class="kpi-value">342</div>
+        <div class="kpi-sub">businesses + persons</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">Hits</div><span>⚡</span></div>
+        <div class="kpi-value" style="color:var(--red)">8</div>
+        <div class="kpi-sub">2.3% hit rate</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">PEPs Identified</div><span>👤</span></div>
+        <div class="kpi-value" style="color:var(--yellow)">3</div>
+        <div class="kpi-sub">EDD required</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-label">False Positives</div><span>✓</span></div>
+        <div class="kpi-value" style="color:var(--green)">5</div>
+        <div class="kpi-sub">reviewed &amp; cleared</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Recent Screenings</div>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Type</th>
+            <th>Provider</th>
+            <th>Screen Type</th>
+            <th>Status</th>
+            <th>Hits</th>
+            <th>PEP</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Oaknorth Bank plc</strong></td>
+            <td><span style="font-size:11px;color:var(--text3)">Business</span></td>
+            <td><span class="mono">namescan</span></td>
+            <td><span style="font-size:11px">full_kyb</span></td>
+            <td><span class="badge badge-hit">Hit</span></td>
+            <td><span style="color:var(--red);font-weight:600">1</span></td>
+            <td><span style="color:var(--text3)">No</span></td>
+            <td style="font-size:11px;color:var(--text3)">Today 08:41</td>
+          </tr>
+          <tr>
+            <td><strong>N. Storonsky</strong></td>
+            <td><span style="font-size:11px;color:var(--text3)">Person</span></td>
+            <td><span class="mono">namescan</span></td>
+            <td><span style="font-size:11px">pep</span></td>
+            <td><span class="badge badge-hit">Hit</span></td>
+            <td><span style="color:var(--text3)">0</span></td>
+            <td><span style="color:var(--yellow);font-weight:600">Yes</span></td>
+            <td style="font-size:11px;color:var(--text3)">Yesterday</td>
+          </tr>
+          <tr>
+            <td><strong>Monzo Bank Ltd</strong></td>
+            <td><span style="font-size:11px;color:var(--text3)">Business</span></td>
+            <td><span class="mono">namescan</span></td>
+            <td><span style="font-size:11px">full_kyb</span></td>
+            <td><span class="badge badge-clear">Clear</span></td>
+            <td><span style="color:var(--text3)">0</span></td>
+            <td><span style="color:var(--text3)">No</span></td>
+            <td style="font-size:11px;color:var(--text3)">Today 02:10</td>
+          </tr>
+          <tr>
+            <td><strong>Wise Payments Ltd</strong></td>
+            <td><span style="font-size:11px;color:var(--text3)">Business</span></td>
+            <td><span class="mono">dilisense</span></td>
+            <td><span style="font-size:11px">sanctions</span></td>
+            <td><span class="badge badge-clear">Clear</span></td>
+            <td><span style="color:var(--text3)">0</span></td>
+            <td><span style="color:var(--text3)">No</span></td>
+            <td style="font-size:11px;color:var(--text3)">Jun 1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('page-' + name).style.display = '';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const map = {overview: 0, kyb: 1, aml: 2, alerts: 3, cass15: 4, reports: 5, audit: 6};
+  const items = document.querySelectorAll('.nav-item');
+  if (map[name] !== undefined) items[map[name]].classList.add('active');
+}
+</script>
+</body>
+</html>
