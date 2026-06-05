@@ -151,7 +151,7 @@ class TransactionMonitor:
         """
         amount = float(tx.get("amount", 0))
         currency = tx.get("currency", "GBP").upper()
-        threshold = float(rule_config.get("threshold", 9999))
+        threshold = float(rule_config.get("threshold") or 9999)
 
         return currency == "GBP" and 8000 <= amount <= threshold
 
@@ -211,7 +211,7 @@ class TransactionMonitor:
         Ex: 10 000, 50 000, 100 000 → suspect.
         """
         amount = float(tx.get("amount", 0))
-        threshold = float(rule_config.get("threshold", 5000))
+        threshold = float(rule_config.get("threshold") or 5000)
         return amount > threshold and amount == int(amount) and int(amount) % 1000 == 0
 
     # ─────────────────────────────────────────────
@@ -227,7 +227,7 @@ class TransactionMonitor:
         if not business_id:
             return False
 
-        multiplier = float(rule_config.get("threshold", 3))
+        multiplier = float(rule_config.get("threshold") or 3)
 
         avg = await db.fetchval(
             """
@@ -261,10 +261,18 @@ class TransactionMonitor:
                 "enabled": row["enabled"],
             }
 
-        # Fallback : activer toutes les règles si aucune config en DB
+        # Fallback : activer toutes les règles avec seuils par défaut si aucune config en DB
+        DEFAULTS = {
+            "structuring":       {"threshold": 9999,  "window_minutes": None},
+            "velocity":          {"threshold": 5,     "window_minutes": 60},
+            "high_risk_country": {"threshold": None,  "window_minutes": None},
+            "unusual_hours":     {"threshold": None,  "window_minutes": None},
+            "round_amount":      {"threshold": 5000,  "window_minutes": None},
+            "behavior_change":   {"threshold": 3,     "window_minutes": 43200},
+        }
         if not rules:
-            for name in RULE_SCORES:
-                rules[name] = {"enabled": True, "threshold": None, "window_minutes": None}
+            for name, defaults in DEFAULTS.items():
+                rules[name] = {"enabled": True, **defaults}
 
         return rules
 
