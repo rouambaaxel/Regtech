@@ -298,7 +298,7 @@ async def login(
         body.email,
     )
 
-    if not user or not verify_password(body.password, user["password_hash"]):
+    if not user or not user["password_hash"] or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not user["is_active"]:
