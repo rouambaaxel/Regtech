@@ -1,5 +1,5 @@
-﻿-- ============================================================
--- ComplianceOS â€” Schema PostgreSQL
+-- ============================================================
+-- ComplianceOS — Schema PostgreSQL
 -- Migration initiale : Core + KYB + AML + CASS 15
 -- Compatible PostgreSQL 15+
 -- ============================================================
@@ -59,9 +59,9 @@ CREATE TABLE tenants (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name            VARCHAR(255) NOT NULL,
     slug            VARCHAR(100) NOT NULL UNIQUE,
-    fca_firm_ref    VARCHAR(20),                    -- rÃ©fÃ©rence FCA du client
+    fca_firm_ref    VARCHAR(20),                    -- référence FCA du client
     plan            tenant_plan NOT NULL DEFAULT 'starter',
-    api_key_hash    VARCHAR(255),                   -- bcrypt hash de la clÃ© API
+    api_key_hash    VARCHAR(255),                   -- bcrypt hash de la clé API
     settings        JSONB NOT NULL DEFAULT '{}',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -102,7 +102,7 @@ CREATE TABLE businesses (
     risk_level          risk_level,
     last_verified_at    TIMESTAMPTZ,
     next_review_due     DATE,
-    raw_ch_data         JSONB DEFAULT '{}',         -- rÃ©ponse brute Companies House
+    raw_ch_data         JSONB DEFAULT '{}',         -- réponse brute Companies House
     metadata            JSONB DEFAULT '{}',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -133,7 +133,7 @@ CREATE TABLE persons (
     pep_detail              JSONB,
     sanctions_hit           BOOLEAN NOT NULL DEFAULT FALSE,
     idv_status              idv_status NOT NULL DEFAULT 'not_started',
-    idv_provider_ref        VARCHAR(255),           -- rÃ©fÃ©rence chez ComplyCube/Onfido
+    idv_provider_ref        VARCHAR(255),           -- référence chez ComplyCube/Onfido
     screening_last_run      TIMESTAMPTZ,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -143,14 +143,14 @@ CREATE INDEX idx_persons_pep ON persons(is_pep) WHERE is_pep = TRUE;
 CREATE INDEX idx_persons_sanctions ON persons(sanctions_hit) WHERE sanctions_hit = TRUE;
 
 -- ============================================================
--- KYB : UBOs (personnes avec contrÃ´le significatif)
+-- KYB : UBOs (personnes avec contrôle significatif)
 -- ============================================================
 
 CREATE TABLE ubos (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id     UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
     person_id       UUID NOT NULL REFERENCES persons(id),
-    ownership_pct   NUMERIC(5,2),                  -- % de dÃ©tention
+    ownership_pct   NUMERIC(5,2),                  -- % de détention
     ownership_type  VARCHAR(50),                   -- direct | indirect | voting
     is_controlling  BOOLEAN NOT NULL DEFAULT FALSE,
     source          VARCHAR(50) DEFAULT 'companies_house',
@@ -158,7 +158,7 @@ CREATE TABLE ubos (
     UNIQUE(business_id, person_id)
 );
 
--- Structures d'actionnariat imbriquÃ©es (corporate PSCs)
+-- Structures d'actionnariat imbriquées (corporate PSCs)
 CREATE TABLE ownership_chains (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id       UUID NOT NULL REFERENCES tenants(id),
@@ -222,15 +222,15 @@ CREATE INDEX idx_alerts_status ON alerts(status) WHERE status = 'open';
 CREATE INDEX idx_alerts_severity ON alerts(severity);
 
 -- ============================================================
--- CASS 15 : SAFEGUARDING RECORDS (rÃ©conciliation quotidienne)
+-- CASS 15 : SAFEGUARDING RECORDS (réconciliation quotidienne)
 -- ============================================================
 
 CREATE TABLE safeguarding_records (
     id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id               UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     record_date             DATE NOT NULL,
-    total_relevant_funds    NUMERIC(18,2) NOT NULL,  -- fonds clients totaux (Â£)
-    safeguarded_amount      NUMERIC(18,2) NOT NULL,  -- montant dans comptes sÃ©grÃ©guÃ©s
+    total_relevant_funds    NUMERIC(18,2) NOT NULL,  -- fonds clients totaux (£)
+    safeguarded_amount      NUMERIC(18,2) NOT NULL,  -- montant dans comptes ségrégués
     shortfall               NUMERIC(18,2) GENERATED ALWAYS AS (
                                 total_relevant_funds - safeguarded_amount
                             ) STORED,
@@ -247,7 +247,7 @@ CREATE INDEX idx_safeguarding_unreconciled ON safeguarding_records(tenant_id)
     WHERE reconciled = FALSE;
 
 -- ============================================================
--- FCA REPORTS : Rapports rÃ©glementaires
+-- FCA REPORTS : Rapports réglementaires
 -- ============================================================
 
 CREATE TABLE fca_reports (
@@ -258,8 +258,8 @@ CREATE TABLE fca_reports (
     period_end      DATE NOT NULL,
     status          report_status NOT NULL DEFAULT 'draft',
     submitted_at    TIMESTAMPTZ,
-    payload         JSONB DEFAULT '{}',             -- donnÃ©es du rapport
-    pdf_url         TEXT,                           -- URL S3/Storage du PDF gÃ©nÃ©rÃ©
+    payload         JSONB DEFAULT '{}',             -- données du rapport
+    pdf_url         TEXT,                           -- URL S3/Storage du PDF généré
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(tenant_id, report_type, period_start)
@@ -269,12 +269,12 @@ CREATE INDEX idx_fca_reports_tenant ON fca_reports(tenant_id);
 CREATE INDEX idx_fca_reports_status ON fca_reports(status);
 
 -- ============================================================
--- AUDIT LOG (immuable â€” ne jamais faire de UPDATE/DELETE)
+-- AUDIT LOG (immuable — ne jamais faire de UPDATE/DELETE)
 -- ============================================================
 
 CREATE TABLE audit_log (
     id              BIGSERIAL PRIMARY KEY,
-    tenant_id       UUID NOT NULL,                  -- pas de FK pour prÃ©server aprÃ¨s suppression tenant
+    tenant_id       UUID NOT NULL,                  -- pas de FK pour préserver après suppression tenant
     user_id         UUID,
     action          VARCHAR(100) NOT NULL,
     entity_type     VARCHAR(50),
@@ -296,7 +296,7 @@ CREATE INDEX idx_audit_created ON audit_log(created_at DESC);
 -- FONCTIONS UTILITAIRES
 -- ============================================================
 
--- Mise Ã  jour auto du updated_at
+-- Mise à jour auto du updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -311,7 +311,7 @@ CREATE TRIGGER trg_alerts_updated_at     BEFORE UPDATE ON alerts     FOR EACH RO
 CREATE TRIGGER trg_fca_reports_updated   BEFORE UPDATE ON fca_reports FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================
--- SEED : Tenant de dÃ©veloppement
+-- SEED : Tenant de développement
 -- ============================================================
 
 INSERT INTO tenants (id, name, slug, fca_firm_ref, plan)
@@ -332,13 +332,11 @@ VALUES (
 );
 
 
--- ============================================================
 -- AUTH MIGRATION
--- ============================================================
 
 -- ============================================================
--- ComplianceOS â€” Auth Migration
--- Ajouter Ã  schema.sql (ou lancer en migration sÃ©parÃ©e)
+-- ComplianceOS — Auth Migration
+-- Ajouter à schema.sql (ou lancer en migration séparée)
 -- ============================================================
 
 -- Colonnes auth sur la table users existante
@@ -375,4 +373,3 @@ CREATE INDEX IF NOT EXISTS idx_rt_active  ON refresh_tokens(user_id) WHERE revok
 
 -- Auto-purge expired tokens (run via pg_cron or cron job)
 -- DELETE FROM refresh_tokens WHERE expires_at < NOW() - INTERVAL '7 days';
-
