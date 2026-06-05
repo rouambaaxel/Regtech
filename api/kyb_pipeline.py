@@ -15,7 +15,7 @@ import uuid
 import os
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from dotenv import load_dotenv
 
 from companies_house import CompaniesHouseClient
@@ -79,7 +79,7 @@ async def upsert_business(conn, tenant_id: str, kyb_data: dict, risk_score: int,
         kyb_data["company_number"],
         kyb_data["company_name"],
         "GB",
-        kyb_data.get("incorporation_date"),
+        date.fromisoformat(kyb_data["incorporation_date"]) if kyb_data.get("incorporation_date") else None,
         kyb_data.get("sic_codes", []),
         json.dumps(kyb_data.get("registered_address", {})),
         "approved" if risk_level in ("low", "medium") else "review_required",
