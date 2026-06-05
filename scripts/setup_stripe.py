@@ -19,11 +19,12 @@ except ImportError:
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
 
 if not stripe.api_key or stripe.api_key.startswith("sk_test_..."):
-    print("❌ STRIPE_SECRET_KEY non configuré. Ajouter dans Railway ou .env")
+    print("[ERREUR] STRIPE_SECRET_KEY non configure. Ajouter dans Railway ou .env")
     sys.exit(1)
 
-print(f"🔑 Stripe mode: {'LIVE' if stripe.api_key.startswith('sk_live') else 'TEST'}")
-print("Création des produits et prix GBP...\n")
+mode = "LIVE" if stripe.api_key.startswith("sk_live") else "TEST"
+print(f"[OK] Stripe mode: {mode}")
+print("Creation des produits et prix GBP...\n")
 
 # ── 1. Produit KYB Pay-per-use £1.00 ──
 prod_payg = stripe.Product.create(
@@ -36,8 +37,8 @@ price_payg = stripe.Price.create(
     currency="gbp",
     nickname="payg_kyb_1gbp",
 )
-print(f"✅ PAYG Product : {prod_payg.id}")
-print(f"   PAYG Price   : {price_payg.id}  (£1.00 / vérification)\n")
+print(f"[OK] PAYG Product : {prod_payg.id}")
+print(f"   PAYG Price   : {price_payg.id}  (GBP 1.00 / verification)\n")
 
 # ── 2. Abonnement Starter £79/mois ──
 prod_starter = stripe.Product.create(
@@ -51,8 +52,8 @@ price_starter = stripe.Price.create(
     recurring={"interval": "month"},
     nickname="starter_79_gbp",
 )
-print(f"✅ Starter Product : {prod_starter.id}")
-print(f"   Starter Price   : {price_starter.id}  (£79.00 / mois)\n")
+print(f"[OK] Starter Product : {prod_starter.id}")
+print(f"   Starter Price   : {price_starter.id}  (GBP 79.00 / mois)\n")
 
 # ── 3. Usage metered — dépassement £0.80/vérif ──
 prod_usage = stripe.Product.create(
@@ -70,8 +71,8 @@ price_usage = stripe.Price.create(
     },
     nickname="kyb_metered_overage_gbp",
 )
-print(f"✅ Metered Product : {prod_usage.id}")
-print(f"   Metered Price   : {price_usage.id}  (£0.80 / vérif dépassement)\n")
+print(f"[OK] Metered Product : {prod_usage.id}")
+print(f"   Metered Price   : {price_usage.id}  (GBP 0.80 / verif depassement)\n")
 
 # ── Résumé ──
 print("=" * 55)

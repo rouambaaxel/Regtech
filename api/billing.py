@@ -99,11 +99,22 @@ async def get_or_create_stripe_customer(
 async def write_audit(
     db: asyncpg.Connection, tenant_id: str, action: str, entity_id: str, data: dict
 ):
+    # entity_id doit être un UUID valide (32-36 chars)
+    # Les Stripe IDs (cs_test_..., sub_...) sont stockés dans le champ after->stripe_id
+    try:
+        import uuid as _uuid
+        _uuid.UUID(entity_id)   # valide si c'est déjà un UUID
+        valid_entity_id = entity_id
+    except (ValueError, AttributeError):
+        # Ce n'est pas un UUID → on génère un nouveau et on stocke le stripe_id dans after
+        valid_entity_id = str(uuid.uuid4())
+        data = {**data, "stripe_id": entity_id}
+
     await db.execute(
         """INSERT INTO audit_log
              (tenant_id, action, entity_type, entity_id, after, created_at)
            VALUES ($1,$2,'billing',$3,$4,$5)""",
-        tenant_id, action, entity_id,
+        tenant_id, action, valid_entity_id,
         json.dumps(data), datetime.now(timezone.utc),
     )
 
