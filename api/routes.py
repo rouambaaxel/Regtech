@@ -283,8 +283,56 @@ async def run_kyb(
 ):
     """
     Trigger KYB pipeline asynchronously.
+    Vérifie les crédits billing avant de lancer.
     Returns a job_id to poll via GET /api/v1/kyb/jobs/{job_id}
     """
+    # ── Vérification billing ──
+    tenant = await db.fetchrow(
+        "SELECT billing_mode, kyb_credits FROM tenants WHERE id = $1", tenant_id
+    )
+    if tenant:
+        billing_mode  = tenant["billing_mode"] or "payg"
+        kyb_credits   = tenant["kyb_credits"] or 0
+
+        if billing_mode == "payg" and kyb_credits == 0:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "error": "payment_required",
+                    "message": "Aucun credit KYB disponible. Payez GBP 1.00 par verification ou abonnez-vous a GBP 79/mois.",
+                    "options": {
+                        "payg_checkout": "/api/v1/billing/kyb-checkout",
+                        "subscribe":     "/api/v1/billing/subscribe",
+                        "usage":         "/api/v1/billing/usage",
+                    }
+                }
+            )
+
+        # Décrémenter les crédits en mode PAYG
+        if billing_mode == "payg" and kyb_credits > 0:
+            await db.execute(
+                "UPDATE tenants SET kyb_credits = kyb_credits - 1 WHERE id = $1", tenant_id
+            )
+
+        # Logger l'usage metered Stripe si abonnement actif
+        if billing_mode == "subscription":
+            try:
+                import stripe as _stripe
+                _stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+                sub_row = await db.fetchrow(
+                    "SELECT stripe_sub_id FROM tenants WHERE id = $1", tenant_id
+                )
+                price_usage = os.environ.get("STRIPE_PRICE_USAGE", "")
+                if sub_row and sub_row["stripe_sub_id"] and price_usage and _stripe.api_key:
+                    sub = _stripe.Subscription.retrieve(sub_row["stripe_sub_id"])
+                    for item in sub["items"]["data"]:
+                        if item["price"]["id"] == price_usage:
+                            _stripe.SubscriptionItem.create_usage_record(
+                                item["id"], quantity=1, timestamp="now", action="increment"
+                            )
+            except Exception as e:
+                logger.warning(f"Usage record Stripe non loggue: {e}")
+
     job_id = str(uuid.uuid4())
 
     # Store job in DB
