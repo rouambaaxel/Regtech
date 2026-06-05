@@ -659,6 +659,17 @@ async def create_report(
     tenant_id: str = Depends(get_tenant),
     db: asyncpg.Connection = Depends(get_db),
 ):
+    # Check for duplicate
+    existing = await db.fetchrow(
+        "SELECT id FROM fca_reports WHERE tenant_id=$1 AND report_type=$2 AND period_start=$3",
+        tenant_id, body.report_type, body.period_start,
+    )
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Report {body.report_type} already exists for period starting {body.period_start}",
+        )
+
     report_id = str(uuid.uuid4())
     status = "ready" if body.mlro_sign_off else "draft"
 
